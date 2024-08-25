@@ -14,7 +14,7 @@ contract DAO {
         string name;
         uint256 amount;
         address payable recipient;
-        uint256 votes;
+        int256 votes;
         bool finalized;
     }
 
@@ -30,6 +30,7 @@ contract DAO {
         address creator
     );
     event Vote(uint256 id, address investor);
+    event Downvote(uint256 id, address investor);
     event Finalize(uint256 id);
 
     constructor(Token _token, uint256 _quorum) {
@@ -85,13 +86,31 @@ contract DAO {
         require(!votes[msg.sender][_id], "already voted");
 
         // update votes
-        proposal.votes += token.balanceOf(msg.sender);
+        proposal.votes += int(token.balanceOf(msg.sender));
 
         // Track that user has voted
         votes[msg.sender][_id] = true;
 
         // Emit an event
         emit Vote(_id, msg.sender);
+    }
+
+    // Downvote on proposal
+    function downvote(uint256 _id) external onlyInvestor {
+        // Fetch proposal from mapping by id
+        Proposal storage proposal = proposals[_id];
+
+        // Don't let investors vote twice
+        require(!votes[msg.sender][_id], "already voted");
+
+        // update votes
+        proposal.votes -= int(token.balanceOf(msg.sender));
+
+        // Track that user has voted
+        votes[msg.sender][_id] = true;
+
+        // Emit an event
+        emit Downvote(_id, msg.sender);
     }
 
     // Finalize proposal & tranfer funds
@@ -106,7 +125,7 @@ contract DAO {
         proposal.finalized = true;
 
         // Check that proposal has enough votes
-        require(proposal.votes >= quorum, "must reach quorum to finalize proposal");
+        require(proposal.votes >= int(quorum), "must reach quorum to finalize proposal");
 
         // Check that the contract has enough ether
         require(address(this).balance >= proposal.amount);

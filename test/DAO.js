@@ -32,6 +32,8 @@ describe('DAO', () => {
     recipient = accounts[7]
     user = accounts[8]
 
+    let transaction
+
     // Deploy Token
     const Token = await ethers.getContractFactory('Token')
     token = await Token.deploy('Dapp University', 'DAPP', '1000000')
@@ -159,6 +161,56 @@ describe('DAO', () => {
         await transaction.wait()
 
         await expect(dao.connect(investor1).vote(1)).to.be.reverted
+      })
+    })
+  })
+
+  describe('DownVoting', () => {
+    let transaction, result
+
+    beforeEach(async () => {
+      transaction = await dao.connect(investor1).createProposal('Proposal 1', ether(100), recipient.address)
+      result = await transaction.wait()
+    })
+
+    describe('Success', () => {
+
+      beforeEach(async () => {
+        transaction = await dao.connect(investor1).downvote(1)
+        result = await transaction.wait()
+      })
+
+      it('updates vote count', async () => {
+        const proposal = await dao.proposals(1)
+        expect(proposal.votes).to.equal(tokens(-200000))
+      })
+
+      it('emits vote event', async () => {
+        await expect(transaction).to.emit(dao, "Downvote")
+            .withArgs(1, investor1.address)
+      })
+
+    })
+
+    describe('Failure', () => {
+
+      it('reject non-investor', async () => {
+        await expect(dao.connect(user).vote(1)).to.be.reverted
+      })
+
+
+      it('rejects double downvoting', async () => {
+        transaction = await dao.connect(investor1).downvote(1)
+        await transaction.wait()
+
+        await expect(dao.connect(investor1).downvote(1)).to.be.reverted
+      })
+
+      it('rejects double voting', async () => {
+        transaction = await dao.connect(investor1).vote(1)
+        await transaction.wait()
+
+        await expect(dao.connect(investor1).downvote(1)).to.be.reverted
       })
     })
   })
