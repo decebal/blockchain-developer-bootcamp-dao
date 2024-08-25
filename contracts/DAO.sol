@@ -12,6 +12,7 @@ contract DAO {
     struct Proposal {
         uint256 id;
         string name;
+        string description;
         uint256 amount;
         address payable recipient;
         int256 votes;
@@ -53,16 +54,19 @@ contract DAO {
     // Create proposal
     function createProposal(
         string memory _name,
+        string memory _description,
         uint256 _amount,
         address payable _recipient
     ) external onlyInvestor {
         require(address(this).balance >= _amount);
+        require(bytes(_description).length > 0);
 
         proposalCount++;
 
         proposals[proposalCount] = Proposal(
             proposalCount,
             _name,
+            _description,
             _amount,
             _recipient,
             0,
@@ -131,7 +135,7 @@ contract DAO {
         require(address(this).balance >= proposal.amount);
 
         // Transfer the funds to recipient
-        (bool sent, ) = proposal.recipient.call{value: proposal.amount}("");
+        (bool sent,) = proposal.recipient.call{value: proposal.amount}("");
         require(sent);
 
         // Emit event
