@@ -23,6 +23,25 @@
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      }
+    ],
+    "name": "Downvote",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
       }
     ],
     "name": "Finalize",
@@ -86,6 +105,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "_description",
+        "type": "string"
+      },
+      {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
@@ -97,6 +121,19 @@
       }
     ],
     "name": "createProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      }
+    ],
+    "name": "downvote",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -148,6 +185,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
@@ -158,9 +200,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int256",
         "name": "votes",
-        "type": "uint256"
+        "type": "int256"
       },
       {
         "internalType": "bool",
@@ -208,6 +250,30 @@
     "name": "vote",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "votes",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

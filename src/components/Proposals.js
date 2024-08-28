@@ -1,12 +1,25 @@
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
-import { ethers } from 'ethers'
+import {ethers} from 'ethers'
 
 const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
+
   const voteHandler = async (id) => {
     try {
       const signer = await provider.getSigner()
       const transaction = await dao.connect(signer).vote(id)
+      await transaction.wait()
+    } catch {
+      window.alert('User rejected or transaction reverted')
+    }
+
+    setIsLoading(true)
+  }
+
+  const downvoteHandler = async (id) => {
+    try {
+      const signer = await provider.getSigner()
+      const transaction = await dao.connect(signer).downvote(id)
       await transaction.wait()
     } catch {
       window.alert('User rejected or transaction reverted')
@@ -27,12 +40,24 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
     setIsLoading(true)
   }
 
+  const hasVotedHandler =  (id) => {
+    // try {
+    //   const signer = await provider.getSigner()
+    // console.log({signer, id})
+    //   return await dao.votes(signer.address, id)
+    // } catch {
+    //   window.alert('User rejected or transaction reverted')
+    // }
+    return false
+  }
+
   return (
     <Table striped bordered hover responsive>
       <thead>
         <tr>
           <th>#</th>
           <th>Proposal Name</th>
+          <th>Proposal Description</th>
           <th>Recipient Address</th>
           <th>Amount</th>
           <th>Status</th>
@@ -46,19 +71,29 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
           <tr key={index}>
             <td>{proposal.id.toString()}</td>
             <td>{proposal.name}</td>
+            <td>{proposal.description}</td>
             <td>{proposal.recipient}</td>
             <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{proposal.votes.toString()}</td>
             <td>
-              {!proposal.finalized && (
-                <Button
-                  variant="primary"
-                  style={{ width: '100%' }}
-                  onClick={() => voteHandler(proposal.id)}
-                >
-                  Vote
-                </Button>
+              {!proposal.finalized && !hasVotedHandler(proposal.id) && (
+                <>
+                  <Button
+                    variant="primary m-1"
+                    style={{ width: '100%' }}
+                    onClick={() => voteHandler(proposal.id)}
+                  >
+                    Vote
+                  </Button>
+                  <Button
+                      variant="danger m-1"
+                      style={{ width: '100%' }}
+                      onClick={() => downvoteHandler(proposal.id)}
+                  >
+                    Downvote
+                  </Button>
+                </>
               )}
             </td>
             <td>

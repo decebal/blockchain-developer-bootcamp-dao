@@ -57,7 +57,8 @@ function App() {
     setProposals(items)
 
     // Fetch quorum
-    setQuorum(await dao.quorum())
+    const quorum = await dao.quorum()
+    setQuorum(ethers.utils.formatUnits(quorum, 0))
 
     setIsLoading(false)
   }
@@ -77,27 +78,28 @@ function App() {
       {isLoading ? (
         <Loading />
       ) : (
-        <>
-          <Create
-            provider={provider}
-            dao={dao}
-            setIsLoading={setIsLoading}
-          />
+          <>
+            <Create
+                provider={provider}
+                dao={dao}
+                setIsLoading={setIsLoading}
+            />
 
-          <hr/>
+            <hr/>
 
-          <p className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} ETH</p>
+            <div className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} ETH</div>
+            <div className='text-center'><strong>Quorum Needed:</strong> {quorum} votes</div>
 
-          <hr/>
+            <hr/>
 
-          <Proposals
-            provider={provider}
-            dao={dao}
-            proposals={proposals}
-            quorum={quorum}
-            setIsLoading={setIsLoading}
-          />
-        </>
+            <Proposals
+                provider={provider}
+                dao={dao}
+                proposals={proposals}
+                quorum={quorum}
+                setIsLoading={setIsLoading}
+            />
+          </>
       )}
     </Container>
   )
