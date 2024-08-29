@@ -2,7 +2,7 @@ import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import {ethers} from 'ethers'
 
-const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
+const Proposals = ({ votedProposals, provider, dao, proposals, quorum, setIsLoading }) => {
 
   const voteHandler = async (id) => {
     try {
@@ -40,17 +40,6 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
     setIsLoading(true)
   }
 
-  const hasVotedHandler =  (id) => {
-    // try {
-    //   const signer = await provider.getSigner()
-    // console.log({signer, id})
-    //   return await dao.votes(signer.address, id)
-    // } catch {
-    //   window.alert('User rejected or transaction reverted')
-    // }
-    return false
-  }
-
   return (
     <Table striped bordered hover responsive>
       <thead>
@@ -77,7 +66,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{proposal.votes.toString()}</td>
             <td>
-              {!proposal.finalized && !hasVotedHandler(proposal.id) && (
+              {!proposal.finalized && !votedProposals.has(proposal.id) && (
                 <>
                   <Button
                     variant="primary m-1"

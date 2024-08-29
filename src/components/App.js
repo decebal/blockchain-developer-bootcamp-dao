@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Container } from 'react-bootstrap'
-import { ethers } from 'ethers'
+import {useEffect, useState} from 'react'
+import {Container} from 'react-bootstrap'
+import {ethers} from 'ethers'
 
 // Components
 import Navigation from './Navigation';
@@ -15,94 +15,111 @@ import DAO_ABI from '../abis/DAO.json'
 import config from '../config.json';
 
 function App() {
-  const [provider, setProvider] = useState(null)
-  const [dao, setDao] = useState(null)
-  const [treasuryBalance, setTreasuryBalance] = useState(0)
+    const [provider, setProvider] = useState(null)
+    const [dao, setDao] = useState(null)
+    const [treasuryBalance, setTreasuryBalance] = useState(0)
 
-  const [account, setAccount] = useState(null)
+    const [account, setAccount] = useState(null)
 
-  const [proposals, setProposals] = useState(null)
-  const [quorum, setQuorum] = useState(null)
+    const [proposals, setProposals] = useState(null)
+    const [quorum, setQuorum] = useState(null)
+    const [votedProposals, setVotedProposals] = useState(new Set([]))
 
-  const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(true)
 
-  const loadBlockchainData = async () => {
-    // Initiate provider
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    setProvider(provider)
+    const loadBlockchainData = async () => {
+        // Initiate provider
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        setProvider(provider)
 
-    // Initiate contracts
-    const dao = new ethers.Contract(config[31337].dao.address, DAO_ABI, provider)
-    setDao(dao)
+        // Initiate contracts
+        const dao = new ethers.Contract(config[31337].dao.address, DAO_ABI, provider)
+        setDao(dao)
 
-    // Fetch treasury balance
-    let treasuryBalance = await provider.getBalance(dao.address)
-    treasuryBalance = ethers.utils.formatUnits(treasuryBalance, 18)
-    setTreasuryBalance(treasuryBalance)
+        // Fetch treasury balance
+        let treasuryBalance = await provider.getBalance(dao.address)
+        treasuryBalance = ethers.utils.formatUnits(treasuryBalance, 18)
+        setTreasuryBalance(treasuryBalance)
 
-    // Fetch accounts
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-    const account = ethers.utils.getAddress(accounts[0])
-    setAccount(account)
+        // Fetch accounts
+        const accounts = await window.ethereum.request({method: 'eth_requestAccounts'})
+        const account = ethers.utils.getAddress(accounts[0])
+        setAccount(account)
 
-    // Fetch proposals count
-    const count = await dao.proposalCount()
-    const items = []
+        // Fetch proposals count
+        const count = await dao.proposalCount()
+        const items = []
 
-    for(var i = 0; i < count; i++) {
-      const proposal = await dao.proposals(i + 1)
-      items.push(proposal)
+        for (let i = 0; i < count; i++) {
+            const proposal = await dao.proposals(i + 1)
+            items.push({...proposal, id: i + 1})
+        }
+
+        setProposals(items)
+
+        // Fetch quorum
+        const quorum = await dao.quorum()
+        setQuorum(ethers.utils.formatUnits(quorum, 0))
+
+        // Fetch voted Proposals
+        const votedProposals = new Set([])
+        items.map(async ({id}) => {
+            try {
+                console.log({account, id})
+                const voted = await dao.votes(account, id)
+                if (voted) {
+                    votedProposals.add(id)
+                }
+            } catch (e) {
+                console.log(e)
+            }
+        })
+        setVotedProposals(votedProposals)
+
+        setIsLoading(false)
     }
 
-    setProposals(items)
+    useEffect(() => {
+        if (isLoading) {
+            loadBlockchainData()
+        }
+    }, [isLoading]);
 
-    // Fetch quorum
-    const quorum = await dao.quorum()
-    setQuorum(ethers.utils.formatUnits(quorum, 0))
+    return (
+        <Container>
+            <Navigation account={account}/>
 
-    setIsLoading(false)
-  }
+            <h1 className='my-4 text-center'>Welcome to our DAO!</h1>
 
-  useEffect(() => {
-    if (isLoading) {
-      loadBlockchainData()
-    }
-  }, [isLoading]);
+            {isLoading ? (
+                <Loading/>
+            ) : (
+                <>
+                    <Create
+                        provider={provider}
+                        dao={dao}
+                        setIsLoading={setIsLoading}
+                    />
 
-  return(
-    <Container>
-      <Navigation account={account} />
+                    <hr/>
 
-      <h1 className='my-4 text-center'>Welcome to our DAO!</h1>
+                    <div className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} ETH</div>
+                    <div className='text-center'><strong>Quorum Needed:</strong> {quorum} votes</div>
 
-      {isLoading ? (
-        <Loading />
-      ) : (
-          <>
-            <Create
-                provider={provider}
-                dao={dao}
-                setIsLoading={setIsLoading}
-            />
+                    <hr/>
 
-            <hr/>
-
-            <div className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} ETH</div>
-            <div className='text-center'><strong>Quorum Needed:</strong> {quorum} votes</div>
-
-            <hr/>
-
-            <Proposals
-                provider={provider}
-                dao={dao}
-                proposals={proposals}
-                quorum={quorum}
-                setIsLoading={setIsLoading}
-            />
-          </>
-      )}
-    </Container>
-  )
+                    <Proposals
+                        provider={provider}
+                        dao={dao}
+                        proposals={proposals}
+                        votedProposals={votedProposals}
+                        quorum={quorum}
+                        setIsLoading={setIsLoading}
+                    />
+                </>
+            )}
+        </Container>
+    )
 }
 
 export default App;
