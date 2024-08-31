@@ -24,6 +24,7 @@ function App() {
     const [proposals, setProposals] = useState(null)
     const [quorum, setQuorum] = useState(null)
     const [votedProposals, setVotedProposals] = useState(new Set([]))
+    const [proposalBalances, setProposalBalances] = useState(new Map([]))
 
     const [isLoading, setIsLoading] = useState(true)
 
@@ -50,22 +51,18 @@ function App() {
         const count = await dao.proposalCount()
         const items = []
 
-        for (let i = 0; i < count; i++) {
-            const proposal = await dao.proposals(i + 1)
-            items.push({...proposal, id: i + 1})
-        }
-
-        setProposals(items)
-
-        // Fetch quorum
-        const quorum = await dao.quorum()
-        setQuorum(ethers.utils.formatUnits(quorum, 0))
-
         // Fetch voted Proposals
         const votedProposals = new Set([])
-        items.map(async ({id}) => {
+
+        // Fetch proposal Recipient Balances
+        const proposalBalances = new Map([])
+
+        for (let i = 0; i < count; i++) {
+            const proposal = await dao.proposals(i + 1)
+            const id = i + 1
+            items.push({...proposal, id})
+
             try {
-                console.log({account, id})
                 const voted = await dao.votes(account, id)
                 if (voted) {
                     votedProposals.add(id)
@@ -73,8 +70,26 @@ function App() {
             } catch (e) {
                 console.log(e)
             }
-        })
+
+            try {
+                if (!proposalBalances.has(proposal.recipient)) {
+                    proposalBalances.set(
+                        proposal.recipient,
+                        await provider.getBalance(proposal.recipient)
+                    )
+                }
+            } catch (e) {
+                console.log(e)
+            }
+        }
+
+        setProposals(items)
         setVotedProposals(votedProposals)
+        setProposalBalances(proposalBalances)
+
+        // Fetch quorum
+        const quorum = await dao.quorum()
+        setQuorum(ethers.utils.formatUnits(quorum, 0))
 
         setIsLoading(false)
     }
@@ -112,6 +127,7 @@ function App() {
                         provider={provider}
                         dao={dao}
                         proposals={proposals}
+                        proposalBalances={proposalBalances}
                         votedProposals={votedProposals}
                         quorum={quorum}
                         setIsLoading={setIsLoading}

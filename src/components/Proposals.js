@@ -2,7 +2,7 @@ import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import {ethers} from 'ethers'
 
-const Proposals = ({ votedProposals, provider, dao, proposals, quorum, setIsLoading }) => {
+const Proposals = ({ votedProposals, proposalBalances, provider, dao, proposals, quorum, setIsLoading }) => {
 
   const voteHandler = async (id) => {
     try {
@@ -48,6 +48,7 @@ const Proposals = ({ votedProposals, provider, dao, proposals, quorum, setIsLoad
           <th>Proposal Name</th>
           <th>Proposal Description</th>
           <th>Recipient Address</th>
+          <th>Recipient Balance</th>
           <th>Amount</th>
           <th>Status</th>
           <th>Total Votes</th>
@@ -62,6 +63,7 @@ const Proposals = ({ votedProposals, provider, dao, proposals, quorum, setIsLoad
             <td>{proposal.name}</td>
             <td>{proposal.description}</td>
             <td>{proposal.recipient}</td>
+            <td>{ethers.utils.formatUnits(proposalBalances.get(proposal.recipient), "ether")} ETH</td>
             <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{proposal.votes.toString()}</td>
