@@ -93,6 +93,56 @@ async function main() {
     transaction = await dao.connect(investor3).vote(4)
     await transaction.wait()
 
+    console.log(`Fetching dao_usdc...\n`)
+
+    // Fetch deployed dao
+    const dao_usdc = await hre.ethers.getContractAt('DAO_USDC', config[chainId].dao_usdc.address)
+    console.log(`DAO_USDC fetched: ${dao_usdc.address}\n`)
+
+    // Funder sends USDC to DAO treasury
+    //todo add USDC token
+    transaction = await funder.sendTransaction({to: dao_usdc.address, value: ether(1000)}) // 1,000 Ether
+    await transaction.wait()
+    console.log(`Sent funds to dao_usdc treasury...\n`)
+
+    for (var i = 0; i < 3; i++) {
+        // Create Proposal
+        transaction = await dao_usdc.connect(investor1).createProposal(`Proposal ${i + 1}`, "Demo", ether(100), recipient.address)
+        await transaction.wait()
+
+        // Vote 1
+        transaction = await dao_usdc.connect(investor1).vote(i + 1)
+        await transaction.wait()
+
+        // Vote 2
+        transaction = await dao_usdc.connect(investor2).vote(i + 1)
+        await transaction.wait()
+
+        // Vote 3
+        transaction = await dao_usdc.connect(investor3).vote(i + 1)
+        await transaction.wait()
+
+        // Finalize
+        transaction = await dao_usdc.connect(investor1).finalizeProposal(i + 1)
+        await transaction.wait()
+
+        console.log(`Created & Finalized Proposal ${i + 1}\n`)
+    }
+
+    console.log(`Creating one more proposal...\n`)
+
+    // Create one more proposal
+    transaction = await dao_usdc.connect(investor1).createProposal(`Proposal 4`, "Demo", ether(100), recipient.address)
+    await transaction.wait()
+
+    // Vote 1
+    transaction = await dao_usdc.connect(investor2).vote(4)
+    await transaction.wait()
+
+    // Vote 2
+    transaction = await dao_usdc.connect(investor3).vote(4)
+    await transaction.wait()
+
     console.log(`Finished.\n`)
 }
 
